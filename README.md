@@ -99,6 +99,14 @@ The calculator and admin data page also show a heuristic confidence label for hi
 
 This confidence is based on stored dataset quality and recent data operations. It is not a market prediction signal.
 
+## Historical analysis controls
+The calculator page supports filtering the historical ratio view by:
+- start date
+- end date
+- overlap-only mode
+
+These controls update the visible ratio statistics, usable point count, and confidence label for the selected analysis view.
+
 ## Test
 ```bash
 pytest

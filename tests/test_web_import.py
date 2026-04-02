@@ -21,6 +21,22 @@ def test_calculator_page_shows_ratio_confidence() -> None:
     assert "Historical ratio confidence" in response.text
 
 
+def test_calculator_page_persists_history_filters() -> None:
+    response = client.get("/calculator?start_date=2025-01-01&end_date=2025-01-10&overlap_only=true")
+
+    assert response.status_code == 200
+    assert 'value="2025-01-01"' in response.text
+    assert 'value="2025-01-10"' in response.text
+    assert "Use overlapping clean subset only" in response.text
+
+
+def test_calculator_page_handles_invalid_history_range() -> None:
+    response = client.get("/calculator?start_date=2025-02-01&end_date=2025-01-01")
+
+    assert response.status_code == 200
+    assert "Start date cannot be after end date." in response.text
+
+
 def test_admin_import_preview_shows_summary() -> None:
     response = client.post(
         "/admin/import/preview",

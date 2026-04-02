@@ -6,8 +6,10 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.db import Base
 from app.models import PriceHistory
 from app.services.data_integrity import build_dataset_integrity_report
+from app.services.history import get_historical_ratio_overview
 from app.services.imports import get_dataset_status, record_data_event
 from app.services.ratio_confidence import evaluate_ratio_confidence
+from app.repositories.prices import SQLitePriceRepository
 
 
 def _session_factory():
@@ -72,4 +74,28 @@ def test_low_confidence_for_empty_dataset() -> None:
         confidence = evaluate_ratio_confidence(integrity_report=integrity, dataset_status=get_dataset_status(session))
 
     assert confidence.confidence_level == "low"
-    assert "structural integrity errors" in " ".join(confidence.reasons).lower()
+    assert "no usable overlapping dates" in " ".join(confidence.reasons).lower()
+
+
+def test_filtered_view_can_lower_confidence_for_thin_window() -> None:
+    session_factory = _session_factory()
+    with session_factory() as session:
+        for day in range(20):
+            session.add(PriceHistory(recorded_on=date(2025, 1, 1 + day), metal="gold", price_per_ounce_eur=2500 + day))
+            session.add(PriceHistory(recorded_on=date(2025, 1, 1 + day), metal="silver", price_per_ounce_eur=30 + day * 0.1))
+        session.commit()
+        dataset_status = get_dataset_status(session)
+        integrity = build_dataset_integrity_report(session, dataset_status=dataset_status)
+        history = get_historical_ratio_overview(
+            SQLitePriceRepository(session),
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 1, 5),
+            overlap_only=True,
+        )
+        confidence = evaluate_ratio_confidence(
+            integrity_report=integrity,
+            dataset_status=dataset_status,
+            history_overview=history,
+        )
+
+    assert confidence.confidence_level == "low"

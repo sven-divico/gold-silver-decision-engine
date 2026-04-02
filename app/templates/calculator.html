@@ -48,6 +48,11 @@
     Silver price per ounce (EUR)
     <input type="number" min="0.01" step="0.01" name="silver_price_per_ounce" value="{{ form_data.silver_price_per_ounce }}" required>
   </label>
+  <input type="hidden" name="history_start_date" value="{{ history_filters.start_date }}">
+  <input type="hidden" name="history_end_date" value="{{ history_filters.end_date }}">
+  {% if history_filters.overlap_only %}
+  <input type="hidden" name="history_overlap_only" value="on">
+  {% endif %}
   <div class="actions">
     <button class="button" type="submit">Calculate</button>
   </div>
@@ -99,6 +104,32 @@
     </p>
   </div>
 
+  <section class="panel inline-panel">
+    <h3>Historical analysis controls</h3>
+    <p class="muted">Use a date window to focus the stored ratio history. Overlap-only mode restricts the analysis to the ratio-ready clean subset of dates where both metals are present.</p>
+    <form class="import-form" method="get" action="/calculator">
+      <label>
+        Start date
+        <input type="date" name="start_date" value="{{ history_filters.start_date }}">
+      </label>
+      <label>
+        End date
+        <input type="date" name="end_date" value="{{ history_filters.end_date }}">
+      </label>
+      <label class="radio-row">
+        <input type="checkbox" name="overlap_only" value="true" {% if history_filters.overlap_only %}checked{% endif %}>
+        Use overlapping clean subset only
+      </label>
+      <div class="actions">
+        <button class="button" type="submit">Update analysis</button>
+      </div>
+    </form>
+  </section>
+
+  {% if history_error %}
+  <div class="panel error">{{ history_error }}</div>
+  {% endif %}
+
   {% if history_confidence %}
   <div class="panel inline-panel">
     <h3>Historical ratio confidence</h3>
@@ -139,7 +170,27 @@
       <span class="stat-label">Average</span>
       <strong>{{ "%.2f"|format(history.summary.average_ratio) }}</strong>
     </div>
+    <div class="stat-card">
+      <span class="stat-label">Points</span>
+      <strong>{{ history.summary.point_count }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Used Range</span>
+      <strong>{{ history.summary.effective_start_date.isoformat() }} to {{ history.summary.effective_end_date.isoformat() }}</strong>
+    </div>
   </div>
+
+  <dl class="preview-meta">
+    <div><dt>Gold rows in selected view</dt><dd>{{ history.metadata.gold_row_count }}</dd></div>
+    <div><dt>Silver rows in selected view</dt><dd>{{ history.metadata.silver_row_count }}</dd></div>
+    <div><dt>Gold distinct dates</dt><dd>{{ history.metadata.gold_distinct_dates }}</dd></div>
+    <div><dt>Silver distinct dates</dt><dd>{{ history.metadata.silver_distinct_dates }}</dd></div>
+    <div><dt>Overlap dates</dt><dd>{{ history.metadata.overlap_date_count }}</dd></div>
+    <div><dt>Overlap-only mode</dt><dd>{{ "Yes" if history.metadata.filters.overlap_only else "No" }}</dd></div>
+  </dl>
+  {% if history.metadata.note %}
+  <p class="muted">{{ history.metadata.note }}</p>
+  {% endif %}
 
   <div class="history-table-wrap">
     <table class="history-table">
@@ -166,7 +217,7 @@
     </table>
   </div>
   {% else %}
-  <p class="muted">No historical rows are available yet. Run `python scripts/seed_sample_data.py` to populate the local SQLite database.</p>
+  <p class="muted">No usable historical ratio points are available for the current filter selection. Adjust the date window or overlap-only setting, or reload the dataset.</p>
   {% endif %}
 </section>
 {% endblock %}

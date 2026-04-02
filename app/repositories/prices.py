@@ -17,6 +17,7 @@ from app.services.imports import build_import_preview, execute_import_with_audit
 class PricePoint:
     recorded_on: date
     price_per_ounce_eur: float
+    row_id: int | None = None
 
 
 class HistoricalPriceRepository(Protocol):
@@ -59,7 +60,11 @@ class SQLitePriceRepository:
         stmt = stmt.order_by(PriceHistory.recorded_on.asc())
         rows = self.session.scalars(stmt).all()
         return [
-            PricePoint(recorded_on=row.recorded_on, price_per_ounce_eur=row.price_per_ounce_eur)
+            PricePoint(
+                recorded_on=row.recorded_on,
+                price_per_ounce_eur=row.price_per_ounce_eur,
+                row_id=row.id,
+            )
             for row in rows
         ]
 

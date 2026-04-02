@@ -1,4 +1,6 @@
-from fastapi import APIRouter, File, Form, Request, UploadFile
+from datetime import date
+
+from fastapi import APIRouter, File, Form, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -32,7 +34,13 @@ def _default_context(request: Request) -> dict:
         "result": None,
         "history": None,
         "history_confidence": None,
+        "history_error": None,
         "error": None,
+        "history_filters": {
+            "start_date": "",
+            "end_date": "",
+            "overlap_only": False,
+        },
         "form_data": {
             "gold_purchase_amount": 1000,
             "silver_purchase_amount": 1000,
@@ -80,14 +88,29 @@ def _admin_data_context(request: Request) -> dict:
 
 
 def _attach_history(context: dict) -> None:
+    start_date = _parse_optional_date(context["history_filters"]["start_date"])
+    end_date = _parse_optional_date(context["history_filters"]["end_date"])
+    overlap_only = bool(context["history_filters"]["overlap_only"])
     with SessionLocal() as session:
-        context["history"] = get_historical_ratio_overview(SQLitePriceRepository(session))
+        context["history"] = get_historical_ratio_overview(
+            SQLitePriceRepository(session),
+            start_date=start_date,
+            end_date=end_date,
+            overlap_only=overlap_only,
+        )
         dataset_status = get_dataset_status(session)
         integrity_report = build_dataset_integrity_report(session, dataset_status=dataset_status)
         context["history_confidence"] = evaluate_ratio_confidence(
             integrity_report=integrity_report,
             dataset_status=dataset_status,
+            history_overview=context["history"],
         )
+
+
+def _parse_optional_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    return date.fromisoformat(value)
 
 
 def _attach_import_admin_data(context: dict) -> None:
@@ -117,10 +140,23 @@ def index(request: Request) -> HTMLResponse:
 
 
 @router.get("/calculator", response_class=HTMLResponse)
-def calculator(request: Request) -> HTMLResponse:
+def calculator(
+    request: Request,
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    overlap_only: bool = Query(default=False),
+) -> HTMLResponse:
     context = _default_context(request)
     context["title"] = "Calculator"
-    _attach_history(context)
+    context["history_filters"] = {
+        "start_date": start_date or "",
+        "end_date": end_date or "",
+        "overlap_only": overlap_only,
+    }
+    try:
+        _attach_history(context)
+    except ValueError as exc:
+        context["history_error"] = str(exc)
     return templates.TemplateResponse(request, "calculator.html", context)
 
 
@@ -136,9 +172,17 @@ def calculator_submit(
     sale_discount_pct: float = Form(0),
     gold_price_per_ounce: float = Form(...),
     silver_price_per_ounce: float = Form(...),
+    history_start_date: str = Form(""),
+    history_end_date: str = Form(""),
+    history_overlap_only: str | None = Form(default=None),
 ) -> HTMLResponse:
     context = _default_context(request)
     context["title"] = "Calculator"
+    context["history_filters"] = {
+        "start_date": history_start_date,
+        "end_date": history_end_date,
+        "overlap_only": history_overlap_only is not None,
+    }
     context["form_data"] = {
         "gold_purchase_amount": gold_purchase_amount,
         "silver_purchase_amount": silver_purchase_amount,
@@ -165,7 +209,10 @@ def calculator_submit(
         context["result"] = calculate_decision(calculator_inputs)
     except ValueError as exc:
         context["error"] = str(exc)
-    _attach_history(context)
+    try:
+        _attach_history(context)
+    except ValueError as exc:
+        context["history_error"] = str(exc)
 
     return templates.TemplateResponse(request, "calculator.html", context)
 

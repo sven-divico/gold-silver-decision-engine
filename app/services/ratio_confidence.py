@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.services.data_integrity import DatasetIntegrityReport
+from app.services.history import HistoricalRatioOverview
 from app.services.imports import DatasetStatus
 
 
@@ -22,6 +23,7 @@ def evaluate_ratio_confidence(
     *,
     integrity_report: DatasetIntegrityReport,
     dataset_status: DatasetStatus,
+    history_overview: HistoricalRatioOverview | None = None,
 ) -> RatioConfidenceResult:
     latest = dataset_status.latest_import
     latest_event = latest.source_type if latest else None
@@ -33,31 +35,37 @@ def evaluate_ratio_confidence(
 
     reasons: list[str] = []
     warnings: list[str] = []
-    overlap_count = integrity_report.overlap_date_count
+    overlap_count = (
+        history_overview.metadata.overlap_date_count if history_overview else integrity_report.overlap_date_count
+    )
+    overlap_only = history_overview.metadata.filters.overlap_only if history_overview else False
 
     # Heuristic rules:
     # - structural integrity errors or zero overlap => low confidence
     # - thin overlap or recent repairs => medium at best
     # - clean integrity with decent overlap and no duplicates => high
-    if integrity_report.status == "error":
+    if overlap_count == 0:
+        confidence_level = "low"
+        reasons.append("No usable overlapping dates remain in the selected analysis view.")
+    elif integrity_report.status == "error" and not overlap_only:
         confidence_level = "low"
         reasons.append("The dataset currently has structural integrity errors.")
     elif overlap_count < 10:
         confidence_level = "low"
         reasons.append("There are too few overlapping dates for a meaningful ratio history.")
-    elif integrity_report.status == "warning":
+    elif integrity_report.status == "warning" and not overlap_only:
         confidence_level = "medium"
         reasons.append("The dataset is usable, but integrity warnings suggest caution.")
     else:
         confidence_level = "high"
-        reasons.append("Both metals have overlapping coverage with no structural issues detected.")
+        reasons.append("The selected analysis view has overlapping gold and silver coverage.")
 
-    if integrity_report.duplicate_summary.has_duplicates:
+    if integrity_report.duplicate_summary.has_duplicates and not overlap_only:
         warnings.append("Duplicate date/metal rows are present.")
         if confidence_level == "high":
             confidence_level = "medium"
 
-    if integrity_report.gold_only_date_count or integrity_report.silver_only_date_count:
+    if (integrity_report.gold_only_date_count or integrity_report.silver_only_date_count) and not overlap_only:
         warnings.append("Coverage mismatch exists between gold and silver dates.")
         if confidence_level == "high":
             confidence_level = "medium"
@@ -66,6 +74,9 @@ def evaluate_ratio_confidence(
         warnings.append("The dataset was recently repaired, so recent outputs should be reviewed cautiously.")
         if confidence_level == "high":
             confidence_level = "medium"
+
+    if history_overview and history_overview.metadata.note:
+        warnings.append(history_overview.metadata.note)
 
     if confidence_level == "high":
         summary = "High confidence: overlapping gold and silver coverage appears structurally sound."
