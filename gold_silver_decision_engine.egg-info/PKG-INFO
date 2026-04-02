@@ -1,0 +1,43 @@
+Metadata-Version: 2.4
+Name: gold-silver-decision-engine
+Version: 0.1.0
+Summary: Lean FastAPI MVP for gold and silver scenario analysis.
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi<1.0,>=0.115
+Requires-Dist: jinja2<4.0,>=3.1
+Requires-Dist: pydantic-settings<3.0,>=2.2
+Requires-Dist: python-multipart<1.0,>=0.0.9
+Requires-Dist: sqlalchemy<3.0,>=2.0
+Requires-Dist: uvicorn[standard]<1.0,>=0.30
+Provides-Extra: dev
+Requires-Dist: httpx<1.0,>=0.27; extra == "dev"
+Requires-Dist: pytest<9.0,>=8.0; extra == "dev"
+
+# Gold & Silver Decision Engine
+
+Lean FastAPI MVP for comparing physical gold and silver scenarios with a server-rendered UI, SQLite persistence, and room for later market data ingestion.
+
+## Stack
+- FastAPI
+- Jinja2 templates
+- SQLite
+- SQLAlchemy
+- Pydantic settings
+- pytest
+
+## Quick start
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+python scripts/init_db.py
+uvicorn app.main:app --reload
+```
+
+Open `http://127.0.0.1:8000`.
+
+## Test
+```bash
+pytest
+```

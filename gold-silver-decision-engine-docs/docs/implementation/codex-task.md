@@ -34,7 +34,12 @@ Create a working local application using:
 - Keep the UI simple and clean
 - Use server-rendered HTML
 - No authentication
-- No external API integration in the first pass
+- 
+- External API integration is optional in the first pass
+- Prefer free-of-charge APIs only
+- The first version must also work without any API by using manual inputs and/or locally imported historical data
+- Keep the data access layer abstract so paid APIs can be added later without changing calculator logic
+- 
 - Create seed/sample data support for later charting
 - Organize domain logic in testable service modules
 

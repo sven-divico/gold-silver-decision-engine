@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">Admin</p>
+  <h1>Import historical prices from CSV</h1>
+  <p class="lede">Upload a CSV, preview the parsed rows, then confirm append or replace import into the local SQLite database.</p>
+</section>
+
+{% if error %}
+<div class="panel error">{{ error }}</div>
+{% endif %}
+
+{% if message %}
+<div class="panel success">{{ message }}</div>
+{% endif %}
+
+<section class="panel import-panel">
+  <h2>Current dataset status</h2>
+  {% if dataset_status %}
+  <dl class="preview-meta">
+    <div><dt>Total historical rows</dt><dd>{{ dataset_status.total_price_rows }}</dd></div>
+    <div><dt>Dataset origin</dt><dd>{{ dataset_status.dataset_origin }}</dd></div>
+    <div><dt>Latest import</dt><dd>{% if dataset_status.latest_import %}{{ dataset_status.latest_import.created_at.strftime("%Y-%m-%d %H:%M:%S") }}{% else %}None recorded{% endif %}</dd></div>
+    <div><dt>Latest source</dt><dd>{% if dataset_status.latest_import %}{{ dataset_status.latest_import.source_name }}{% else %}N/A{% endif %}</dd></div>
+    <div><dt>Latest mode</dt><dd>{% if dataset_status.latest_import %}{{ dataset_status.latest_import.import_mode }}{% else %}N/A{% endif %}</dd></div>
+  </dl>
+  {% endif %}
+</section>
+
+<section class="panel import-panel">
+  <h2>Upload CSV</h2>
+  <p class="muted">
+    Expected columns: <code>date,metal,price</code>. Date must use ISO format <code>YYYY-MM-DD</code>.
+    Supported metals are <code>gold</code> and <code>silver</code>. Price must be positive.
+  </p>
+  <form class="import-form" method="post" action="/admin/import/preview" enctype="multipart/form-data">
+    <label>
+      CSV file
+      <input type="file" name="csv_file" accept=".csv,text/csv" required>
+    </label>
+    <fieldset class="mode-fieldset">
+      <legend>Import mode</legend>
+      <label class="radio-row"><input type="radio" name="mode" value="append" {% if selected_mode == "append" %}checked{% endif %}> Append</label>
+      <label class="radio-row"><input type="radio" name="mode" value="replace" {% if selected_mode == "replace" %}checked{% endif %}> Replace existing historical rows</label>
+    </fieldset>
+    <div class="actions">
+      <button class="button" type="submit">Preview import</button>
+    </div>
+  </form>
+</section>
+
+{% if preview %}
+<section class="panel import-panel">
+  <h2>Preview</h2>
+  <div class="stats-grid">
+    <div class="stat-card"><span class="stat-label">Mode</span><strong>{{ preview.mode|capitalize }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Total rows</span><strong>{{ preview.total_rows }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Valid rows</span><strong>{{ preview.valid_rows }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Invalid rows</span><strong>{{ preview.invalid_rows }}</strong></div>
+  </div>
+
+  <dl class="preview-meta">
+    <div><dt>Detected metals</dt><dd>{{ preview.detected_metals|join(", ") if preview.detected_metals else "None" }}</dd></div>
+    <div><dt>Date range</dt><dd>{% if preview.date_min %}{{ preview.date_min.isoformat() }} to {{ preview.date_max.isoformat() }}{% else %}No valid dates{% endif %}</dd></div>
+    <div><dt>Import ready</dt><dd>{{ "Yes" if preview.can_import else "No" }}</dd></div>
+  </dl>
+
+  {% if preview.errors %}
+  <div class="panel error inline-panel">
+    <h3>Validation errors</h3>
+    <ul>
+      {% for item in preview.errors %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="history-table-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Line</th>
+          <th>Date</th>
+          <th>Metal</th>
+          <th>Price</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in preview.preview_rows %}
+        <tr>
+          <td>{{ row.line_number }}</td>
+          <td>{{ row.raw_date }}</td>
+          <td>{{ row.raw_metal }}</td>
+          <td>{{ row.raw_price }}</td>
+          <td>{% if row.error %}{{ row.error }}{% else %}Valid{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="/admin/import/execute">
+    <input type="hidden" name="mode" value="{{ preview.mode }}">
+    <input type="hidden" name="source_name" value="{{ source_name or 'uploaded.csv' }}">
+    <textarea class="hidden-textarea" name="csv_content" readonly>{{ csv_content }}</textarea>
+    <div class="actions">
+      <button class="button" type="submit" {% if not preview.can_import %}disabled{% endif %}>Confirm import</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<section class="panel import-panel">
+  <h2>Recent imports</h2>
+  {% if recent_imports %}
+  <div class="history-table-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Source</th>
+          <th>Type</th>
+          <th>Mode</th>
+          <th>Status</th>
+          <th>Rows</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in recent_imports %}
+        <tr>
+          <td>{{ run.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+          <td>{{ run.source_name }}</td>
+          <td>{{ run.source_type }}</td>
+          <td>{{ run.import_mode }}</td>
+          <td>{{ run.status }}{% if run.error_summary %}: {{ run.error_summary }}{% endif %}</td>
+          <td>{{ run.total_rows }} / {{ run.valid_rows }} / {{ run.invalid_rows }} / {{ run.imported_rows }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">Row columns are total / valid / invalid / imported.</p>
+  {% else %}
+  <p class="muted">No import runs have been recorded yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

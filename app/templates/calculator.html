@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">Calculator</p>
+  <h1>Gold vs silver purchase comparison</h1>
+  <p class="lede">Compare gold and silver acquisition costs, Germany-specific silver VAT drag, and the current gold/silver ratio in one decision view.</p>
+</section>
+
+{% if error %}
+<div class="panel error">{{ error }}</div>
+{% endif %}
+
+<form class="grid" method="post" action="/calculator">
+  <label>
+    Gold amount or value (EUR)
+    <input type="number" min="0.01" step="0.01" name="gold_purchase_amount" value="{{ form_data.gold_purchase_amount }}" required>
+  </label>
+  <label>
+    Silver net amount or value (EUR)
+    <input type="number" min="0.01" step="0.01" name="silver_purchase_amount" value="{{ form_data.silver_purchase_amount }}" required>
+  </label>
+  <label>
+    Silver VAT rate (%)
+    <input type="number" min="0" step="0.01" name="silver_vat_rate_pct" value="{{ form_data.silver_vat_rate_pct }}" required>
+  </label>
+  <label>
+    Future price change (%)
+    <input type="number" step="0.01" name="future_price_change_pct" value="{{ form_data.future_price_change_pct }}">
+  </label>
+  <label>
+    Holding period (years)
+    <input type="number" min="0" step="0.1" name="holding_period_years" value="{{ form_data.holding_period_years }}">
+  </label>
+  <label>
+    Purchase premium (%)
+    <input type="number" min="0" step="0.01" name="purchase_premium_pct" value="{{ form_data.purchase_premium_pct }}">
+  </label>
+  <label>
+    Sale discount (%)
+    <input type="number" min="0" max="100" step="0.01" name="sale_discount_pct" value="{{ form_data.sale_discount_pct }}">
+  </label>
+  <label>
+    Gold price per ounce (EUR)
+    <input type="number" min="0.01" step="0.01" name="gold_price_per_ounce" value="{{ form_data.gold_price_per_ounce }}" required>
+  </label>
+  <label>
+    Silver price per ounce (EUR)
+    <input type="number" min="0.01" step="0.01" name="silver_price_per_ounce" value="{{ form_data.silver_price_per_ounce }}" required>
+  </label>
+  <div class="actions">
+    <button class="button" type="submit">Calculate</button>
+  </div>
+</form>
+
+{% if result %}
+<section class="results">
+  <div class="panel">
+    <h2>Decision result</h2>
+    <dl>
+      <div><dt>Gold acquisition value</dt><dd>EUR {{ "%.2f"|format(result.gold_value) }}</dd></div>
+      <div><dt>Silver net value</dt><dd>EUR {{ "%.2f"|format(result.silver_net_value) }}</dd></div>
+      <div><dt>Silver VAT amount</dt><dd>EUR {{ "%.2f"|format(result.silver_vat_amount) }}</dd></div>
+      <div><dt>Silver total acquisition cost</dt><dd>EUR {{ "%.2f"|format(result.silver_total_cost) }}</dd></div>
+      <div><dt>Required appreciation to offset VAT</dt><dd>{{ "%.2f"|format(result.required_appreciation_pct) }}%</dd></div>
+      <div><dt>Gold scenario value</dt><dd>EUR {{ "%.2f"|format(result.gold_future_value) }}</dd></div>
+      <div><dt>Silver scenario value</dt><dd>EUR {{ "%.2f"|format(result.silver_future_value) }}</dd></div>
+      <div><dt>Absolute comparison</dt><dd>EUR {{ "%.2f"|format(result.absolute_difference) }}</dd></div>
+      <div><dt>Percentage comparison</dt><dd>{{ "%.2f"|format(result.percentage_difference) }}%</dd></div>
+    </dl>
+  </div>
+  <div class="panel">
+    <h2>Ratio snapshot</h2>
+    <p class="ratio">{{ "%.2f"|format(result.ratio) }}</p>
+    <p class="status">{{ result.ratio_status|capitalize }}</p>
+    <p>{{ result.ratio_signal }}</p>
+    <p class="muted">Scenario assumption: {{ "%.2f"|format(result.future_price_change_pct) }}% future price change.</p>
+  </div>
+  <div class="panel assumptions">
+    <h2>Assumptions</h2>
+    <ul>
+      {% for assumption in result.assumptions %}
+      <li>{{ assumption }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+<section class="panel history-panel">
+  <div class="history-head">
+    <div>
+      <p class="eyebrow">Historical Ratio</p>
+      <h2>Gold/silver ratio from local SQLite sample data</h2>
+    </div>
+    <p class="muted history-note">
+      {{ history.data_note if history else "No historical data available." }}
+      Values are for analysis and demonstration until a live provider is added.
+    </p>
+  </div>
+
+  {% if history_confidence %}
+  <div class="panel inline-panel">
+    <h3>Historical ratio confidence</h3>
+    <p><strong>{{ history_confidence.confidence_level|upper }}</strong>: {{ history_confidence.short_summary }}</p>
+    <p class="muted">Integrity status: {{ history_confidence.integrity_status }}. Overlap dates: {{ history_confidence.overlap_count }}.</p>
+    {% if history_confidence.reasons %}
+    <ul>
+      {% for item in history_confidence.reasons %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if history_confidence.warnings %}
+    <ul>
+      {% for item in history_confidence.warnings %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if history and history.summary %}
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Latest</span>
+      <strong>{{ "%.2f"|format(history.summary.latest_ratio) }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Minimum</span>
+      <strong>{{ "%.2f"|format(history.summary.min_ratio) }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Maximum</span>
+      <strong>{{ "%.2f"|format(history.summary.max_ratio) }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Average</span>
+      <strong>{{ "%.2f"|format(history.summary.average_ratio) }}</strong>
+    </div>
+  </div>
+
+  <div class="history-table-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Gold (EUR/oz)</th>
+          <th>Silver (EUR/oz)</th>
+          <th>Ratio</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for point in history.points[-12:]|reverse %}
+        <tr>
+          <td>{{ point.recorded_on.isoformat() }}</td>
+          <td>{{ "%.2f"|format(point.gold_price_per_ounce_eur) }}</td>
+          <td>{{ "%.2f"|format(point.silver_price_per_ounce_eur) }}</td>
+          <td>{{ "%.2f"|format(point.ratio) }}</td>
+          <td>{{ point.ratio_status|capitalize }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">No historical rows are available yet. Run `python scripts/seed_sample_data.py` to populate the local SQLite database.</p>
+  {% endif %}
+</section>
+{% endblock %}

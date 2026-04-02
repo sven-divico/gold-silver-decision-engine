@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">Admin</p>
+  <h1>Historical data management</h1>
+  <p class="lede">Inspect the current SQLite dataset, safely reset rows, or restore the deterministic sample dataset.</p>
+</section>
+
+{% if error %}
+<div class="panel error">{{ error }}</div>
+{% endif %}
+
+{% if message %}
+<div class="panel success">{{ message }}</div>
+{% endif %}
+
+<section class="panel import-panel">
+  <h2>Dataset summary</h2>
+  {% if dataset_summary %}
+  <div class="stats-grid">
+    <div class="stat-card"><span class="stat-label">Total rows</span><strong>{{ dataset_summary.total_rows }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Distinct dates</span><strong>{{ dataset_summary.distinct_dates }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Earliest date</span><strong>{{ dataset_summary.earliest_date.isoformat() if dataset_summary.earliest_date else "N/A" }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Latest date</span><strong>{{ dataset_summary.latest_date.isoformat() if dataset_summary.latest_date else "N/A" }}</strong></div>
+  </div>
+
+  <dl class="preview-meta">
+    <div><dt>Counts by metal</dt><dd>{% if dataset_summary.counts_by_metal %}{% for item in dataset_summary.counts_by_metal %}{{ item.metal }}: {{ item.row_count }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}No rows{% endif %}</dd></div>
+    <div><dt>Dataset origin</dt><dd>{{ dataset_status.dataset_origin if dataset_status else "Unknown" }}</dd></div>
+    <div><dt>Latest event</dt><dd>{% if dataset_status and dataset_status.latest_import %}{{ dataset_status.latest_import.created_at.strftime("%Y-%m-%d %H:%M:%S") }} / {{ dataset_status.latest_import.source_type }}{% else %}None recorded{% endif %}</dd></div>
+  </dl>
+  {% endif %}
+</section>
+
+<section class="panel import-panel">
+  <h2>Dataset integrity</h2>
+  {% if integrity_report %}
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Status</span>
+      <strong>{{ integrity_report.status|upper }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Overlap dates</span>
+      <strong>{{ integrity_report.overlap_date_count }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Gold-only dates</span>
+      <strong>{{ integrity_report.gold_only_date_count }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Silver-only dates</span>
+      <strong>{{ integrity_report.silver_only_date_count }}</strong>
+    </div>
+  </div>
+
+  {% if integrity_report.warnings %}
+  <div class="panel error inline-panel">
+    <h3>Warnings</h3>
+    <ul>
+      {% for item in integrity_report.warnings %}
+      <li>{{ item.level|upper }}: {{ item.message }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <p class="muted">No structural integrity warnings were detected for the current dataset.</p>
+  {% endif %}
+
+  <div class="results">
+    <div class="panel">
+      <h3>Per-metal coverage</h3>
+      {% if integrity_report.per_metal_coverage %}
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Metal</th>
+              <th>Rows</th>
+              <th>Distinct dates</th>
+              <th>Earliest</th>
+              <th>Latest</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in integrity_report.per_metal_coverage %}
+            <tr>
+              <td>{{ item.metal }}</td>
+              <td>{{ item.row_count }}</td>
+              <td>{{ item.distinct_dates }}</td>
+              <td>{{ item.earliest_date.isoformat() if item.earliest_date else "N/A" }}</td>
+              <td>{{ item.latest_date.isoformat() if item.latest_date else "N/A" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="muted">No per-metal coverage is available because the dataset is empty.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h3>Duplicates and provenance</h3>
+      <dl class="preview-meta">
+        <div><dt>Duplicate groups</dt><dd>{{ integrity_report.duplicate_summary.duplicate_group_count }}</dd></div>
+        <div><dt>Latest event type</dt><dd>{{ integrity_report.provenance.latest_event_type or "N/A" }}</dd></div>
+        <div><dt>Latest source</dt><dd>{{ integrity_report.provenance.latest_source_name or "N/A" }}</dd></div>
+        <div><dt>Latest mode</dt><dd>{{ integrity_report.provenance.latest_import_mode or "N/A" }}</dd></div>
+        <div><dt>Dataset origin</dt><dd>{{ integrity_report.provenance.dataset_origin }}</dd></div>
+      </dl>
+      {% if integrity_report.duplicate_summary.sample_groups %}
+      <p class="muted">Sample duplicate groups:</p>
+      <ul>
+        {% for item in integrity_report.duplicate_summary.sample_groups %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+{% if ratio_confidence %}
+<section class="panel import-panel">
+  <h2>Historical ratio confidence</h2>
+  <p><strong>{{ ratio_confidence.confidence_level|upper }}</strong>: {{ ratio_confidence.short_summary }}</p>
+  <dl class="preview-meta">
+    <div><dt>Integrity status</dt><dd>{{ ratio_confidence.integrity_status }}</dd></div>
+    <div><dt>Overlap dates</dt><dd>{{ ratio_confidence.overlap_count }}</dd></div>
+    <div><dt>Recently repaired</dt><dd>{{ "Yes" if ratio_confidence.recently_repaired else "No" }}</dd></div>
+    <div><dt>Latest dataset event</dt><dd>{{ ratio_confidence.latest_dataset_event or "N/A" }}</dd></div>
+  </dl>
+  {% if ratio_confidence.reasons %}
+  <ul>
+    {% for item in ratio_confidence.reasons %}
+    <li>{{ item }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if ratio_confidence.warnings %}
+  <ul>
+    {% for item in ratio_confidence.warnings %}
+    <li>{{ item }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel import-panel">
+  <h2>Repair workflow</h2>
+  <p class="muted">
+    Preview and execute simple repairs for detected data-quality issues. Deduplication keeps the lowest row id for each duplicate <code>(date, metal)</code> group and deletes the rest. Prune non-overlap keeps only dates present for both gold and silver.
+  </p>
+  <form class="import-form" method="post" action="/admin/data/repair/preview">
+    <fieldset class="mode-fieldset">
+      <legend>Repair actions</legend>
+      <label class="radio-row"><input type="checkbox" name="repair_actions" value="deduplicate" {% if "deduplicate" in selected_repairs %}checked{% endif %}> Deduplicate duplicate date/metal rows</label>
+      <label class="radio-row"><input type="checkbox" name="repair_actions" value="prune_non_overlap" {% if "prune_non_overlap" in selected_repairs %}checked{% endif %}> Prune non-overlapping dates</label>
+    </fieldset>
+    <div class="actions">
+      <button class="button" type="submit">Preview repair</button>
+    </div>
+  </form>
+
+  {% if repair_preview %}
+  <div class="panel inline-panel">
+    <h3>Repair preview</h3>
+    <div class="stats-grid">
+      <div class="stat-card"><span class="stat-label">Actions</span><strong>{{ repair_preview.selected_actions|join(", ") }}</strong></div>
+      <div class="stat-card"><span class="stat-label">Duplicate rows removed</span><strong>{{ repair_preview.duplicate_rows_to_remove }}</strong></div>
+      <div class="stat-card"><span class="stat-label">Non-overlap rows removed</span><strong>{{ repair_preview.non_overlap_rows_to_remove }}</strong></div>
+      <div class="stat-card"><span class="stat-label">Total rows deleted</span><strong>{{ repair_preview.total_rows_to_delete }}</strong></div>
+    </div>
+    <dl class="preview-meta">
+      <div><dt>Gold-only dates</dt><dd>{{ repair_preview.gold_only_date_count }}</dd></div>
+      <div><dt>Silver-only dates</dt><dd>{{ repair_preview.silver_only_date_count }}</dd></div>
+      <div><dt>Resulting overlap estimate</dt><dd>{{ repair_preview.resulting_overlap_count }}</dd></div>
+      <div><dt>Safe to execute</dt><dd>{{ "Yes" if repair_preview.safe_to_execute else "No" }}</dd></div>
+    </dl>
+
+    {% if repair_preview.warnings %}
+    <div class="panel error inline-panel">
+      <h4>Repair warnings</h4>
+      <ul>
+        {% for item in repair_preview.warnings %}
+        <li>{{ item.message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if repair_preview.duplicate_groups %}
+    <div class="history-table-wrap">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Metal</th>
+            <th>Keep row id</th>
+            <th>Remove row ids</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in repair_preview.duplicate_groups %}
+          <tr>
+            <td>{{ item.recorded_on.isoformat() }}</td>
+            <td>{{ item.metal }}</td>
+            <td>{{ item.kept_row_id }}</td>
+            <td>{{ item.removed_row_ids|join(", ") }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <form class="import-form" method="post" action="/admin/data/repair/execute">
+      {% for action in repair_preview.selected_actions %}
+      <input type="hidden" name="repair_actions" value="{{ action }}">
+      {% endfor %}
+      <label>
+        Type <code>REPAIR</code> to confirm
+        <input type="text" name="confirmation" required>
+      </label>
+      <div class="actions">
+        <button class="button" type="submit" {% if not repair_preview.safe_to_execute %}disabled{% endif %}>Execute repair</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</section>
+
+<section class="results">
+  <div class="panel">
+    <h2>Reset dataset</h2>
+    <p class="muted">Deletes all historical price rows. The calculator and import page will still work, but historical views will show an empty state until data is reseeded or imported again.</p>
+    <form class="import-form" method="post" action="/admin/data/reset">
+      <label>
+        Type <code>RESET</code> to confirm
+        <input type="text" name="confirmation" value="{{ confirmation_value }}" required>
+      </label>
+      <div class="actions">
+        <button class="button danger-button" type="submit">Reset historical data</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>Reseed sample dataset</h2>
+    <p class="muted">Replaces the current dataset with the deterministic local sample series used by the MVP.</p>
+    <form class="import-form" method="post" action="/admin/data/reseed">
+      <div class="actions">
+        <button class="button" type="submit">Reseed sample data</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="panel import-panel">
+  <h2>Recent dataset events</h2>
+  {% if recent_imports %}
+  <div class="history-table-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Source</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Rows</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in recent_imports %}
+        <tr>
+          <td>{{ run.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+          <td>{{ run.source_name }}</td>
+          <td>{{ run.source_type }}</td>
+          <td>{{ run.status }}</td>
+          <td>{{ run.total_rows }} / {{ run.imported_rows }}</td>
+          <td>{{ run.notes or run.error_summary or "" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">Row columns are affected or total rows / imported rows.</p>
+  {% else %}
+  <p class="muted">No dataset-changing events have been recorded yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
