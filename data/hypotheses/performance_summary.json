@@ -1,0 +1,26 @@
+{
+  "h1_mean_reversion": {
+    "average_pnl": 0.0031806752343365176,
+    "hit_rate": 0.5632502308402585,
+    "max_drawdown": -3.725507951838811,
+    "number_of_trades": 1083,
+    "sharpe_ratio": 0.7515538603053634,
+    "total_return": 3.4446712787864486
+  },
+  "h2_gold_lead": {
+    "average_pnl": -0.0035646001859063184,
+    "hit_rate": 0.5052182163187856,
+    "max_drawdown": -15.858672501237947,
+    "number_of_trades": 2108,
+    "sharpe_ratio": -0.7006786197693069,
+    "total_return": -7.514177191890519
+  },
+  "h3_momentum": {
+    "average_pnl": 0.00137870353368552,
+    "hit_rate": 0.545045045045045,
+    "max_drawdown": -30.625548084314406,
+    "number_of_trades": 3774,
+    "sharpe_ratio": 0.15920734237548098,
+    "total_return": 5.203227136129152
+  }
+}

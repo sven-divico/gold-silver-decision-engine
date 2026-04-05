@@ -1,0 +1,95 @@
+{
+  "merge_diagnostics": {
+    "gold_date_max": "2026-04-02",
+    "gold_date_min": "1793-03-01",
+    "merged_date_max": "2026-04-02",
+    "merged_date_min": "1793-03-01",
+    "original_gold_rows": 15215,
+    "original_silver_rows": 16581,
+    "overlapping_merged_rows": 15114,
+    "rows_removed_due_to_date_mismatch": 1568,
+    "silver_date_max": "2026-04-02",
+    "silver_date_min": "1792-03-01"
+  },
+  "missing_data_checks": {
+    "critical_columns_unexpected_missing_ratio": {
+      "gold_close": 0.0,
+      "gsr": 0.0,
+      "silver_close": 0.0
+    },
+    "has_unexpected_missing_values": false,
+    "missing_by_column": {
+      "date": 0,
+      "gold_close": 0,
+      "gold_high": 0,
+      "gold_low": 0,
+      "gold_mom_20d": 20,
+      "gold_open": 0,
+      "gold_ret_1d": 1,
+      "gsr": 0,
+      "gsr_mean_252d": 251,
+      "gsr_mom_20d": 20,
+      "gsr_ret_1d": 1,
+      "gsr_std_252d": 251,
+      "gsr_z_252d": 251,
+      "mom_divergence_20d": 20,
+      "silver_close": 0,
+      "silver_high": 0,
+      "silver_low": 0,
+      "silver_mom_20d": 20,
+      "silver_open": 0,
+      "silver_ret_1d": 1
+    },
+    "unexpected_missing_by_column": {
+      "date": 0,
+      "gold_close": 0,
+      "gold_high": 0,
+      "gold_low": 0,
+      "gold_mom_20d": 0,
+      "gold_open": 0,
+      "gold_ret_1d": 0,
+      "gsr": 0,
+      "gsr_mean_252d": 0,
+      "gsr_mom_20d": 0,
+      "gsr_ret_1d": 0,
+      "gsr_std_252d": 0,
+      "gsr_z_252d": 0,
+      "mom_divergence_20d": 0,
+      "silver_close": 0,
+      "silver_high": 0,
+      "silver_low": 0,
+      "silver_mom_20d": 0,
+      "silver_open": 0,
+      "silver_ret_1d": 0
+    }
+  },
+  "range_sanity_checks": {
+    "daily_return_abs_gt_20pct": {
+      "gold_ret_1d": 5,
+      "gsr_ret_1d": 16,
+      "silver_ret_1d": 13
+    },
+    "gsr_outside_10_200": 0
+  },
+  "row_integrity_checks": {
+    "duplicate_dates": 0,
+    "infinite_values_in_derived_features": 0,
+    "non_positive_close_rows": {
+      "gold_close": 0,
+      "silver_close": 0
+    },
+    "sorted_ascending": true
+  },
+  "schema_checks": {
+    "close_columns_numeric": {
+      "gold_close": true,
+      "silver_close": true
+    },
+    "input_file_exists": {
+      "gold": true,
+      "silver": true
+    },
+    "required_columns_found": true
+  },
+  "validation_status": "passed"
+}

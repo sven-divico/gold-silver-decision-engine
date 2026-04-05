@@ -204,6 +204,30 @@ dd {
   margin-top: 1.5rem;
 }
 
+.decision-panel {
+  margin-top: 1.5rem;
+}
+
+.decision-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.decision-grid ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.decision-grid li {
+  margin-bottom: 0.55rem;
+}
+
+.decision-grid code {
+  font-size: 0.88rem;
+}
+
 .history-head {
   display: flex;
   justify-content: space-between;

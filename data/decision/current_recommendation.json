@@ -1,0 +1,21 @@
+{
+  "active_hypotheses": 1,
+  "confidence": 1.0,
+  "date": "2026-04-02",
+  "decision_score": 0.415732,
+  "opposing_hypotheses": [],
+  "recommendation": "BUY",
+  "summary_text": "Buy signal driven by: Ratio momentum indicates stress-driven silver discount.",
+  "supporting_hypotheses": [
+    {
+      "active": true,
+      "contribution": 0.4157323003482509,
+      "hypothesis_id": "h3_momentum",
+      "hypothesis_name": "Ratio Momentum",
+      "reason_code": "ratio_spike_stress_discount",
+      "regime": "STRESS",
+      "signal": 1,
+      "weight": 0.4157323003482509
+    }
+  ]
+}

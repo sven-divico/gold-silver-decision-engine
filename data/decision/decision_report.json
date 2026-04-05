@@ -1,0 +1,31 @@
+{
+  "artifact_metadata": {
+    "generated_at_utc": "2026-04-05T08:12:33+00:00",
+    "schema_version": "decision.v1"
+  },
+  "current_evaluation_date": "2026-04-02",
+  "hypothesis_count": 3,
+  "input_files_loaded": {
+    "core_features": "data/processed/core_features.parquet",
+    "hypotheses": [
+      "data/hypotheses/h1_mean_reversion.parquet",
+      "data/hypotheses/h2_gold_lead.parquet",
+      "data/hypotheses/h3_momentum.parquet"
+    ],
+    "performance_summary": "data/hypotheses/performance_summary.json"
+  },
+  "scoring_formula": {
+    "decision_score": "sum(latest_signal * quality_weight for active hypotheses)",
+    "quality_score_weights": {
+      "avg_pnl": 0.2,
+      "drawdown_score": 0.1,
+      "hit_rate": 0.4,
+      "total_return": 0.3
+    }
+  },
+  "thresholds": {
+    "buy_threshold": 0.25,
+    "sell_threshold": -0.25
+  },
+  "warnings": []
+}

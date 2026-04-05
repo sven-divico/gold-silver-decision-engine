@@ -21,6 +21,14 @@ def test_calculator_page_shows_ratio_confidence() -> None:
     assert "Historical ratio confidence" in response.text
 
 
+def test_calculator_page_shows_decision_engine_section() -> None:
+    response = client.get("/calculator")
+
+    assert response.status_code == 200
+    assert "Current recommendation from hypothesis leaderboard" in response.text
+    assert "Decision Engine" in response.text
+
+
 def test_calculator_page_persists_history_filters() -> None:
     response = client.get("/calculator?start_date=2025-01-01&end_date=2025-01-10&overlap_only=true")
 

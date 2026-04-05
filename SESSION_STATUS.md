@@ -2,91 +2,105 @@
 
 ## Current State
 
-The repository now contains a working FastAPI MVP for the Gold & Silver Decision Engine with:
+The project now includes a complete 3-step decision pipeline and UI integration:
 
-- server-rendered calculator UI
-- gold vs silver comparison logic
-- SQLite-backed historical price storage
-- deterministic sample data seeding
-- historical ratio computation and summary statistics
-- provider/repository abstraction for historical prices
-- CLI and web CSV import workflows
-- import audit trail
-- admin data management page
-- dataset integrity diagnostics
-- repair preview/execute workflow
-- historical ratio confidence layer
-- historical analysis controls on the calculator page
+- Step 1: Core feature dataset pipeline with validation.
+- Step 2: Hypothesis engine with 3 modular signals, regime gating, backtests, and metrics.
+- Step 3: Decision layer with leaderboard ranking, weighted active-signal aggregation, BUY/HOLD/SELL recommendation, confidence, and explainability payload.
+- FastAPI calculator page now displays decision artifacts directly (recommendation, confidence, reasons, leaderboard).
 
-## What Was Completed Today
+All local tests currently pass.
 
-Implemented historical analysis controls for the calculator page:
+## What Was Added Recently
 
-- date window filtering with `start_date` and `end_date`
-- optional `overlap_only` mode
-- filtered ratio summary statistics
-- filtered coverage metadata
-- view-specific confidence evaluation
-- clearer empty/invalid filter handling
+### Decision UI Integration
+- Added a new decision section on `/calculator` showing:
+  - current recommendation
+  - decision score
+  - confidence
+  - active hypothesis count
+  - supporting vs opposing hypotheses with reason codes
+  - leaderboard table preview
+- Added graceful fallback messaging if artifacts are missing.
 
-## Key Files Touched Recently
+### Artifact Freshness + Guardrails
+- Added decision artifact loading service with warnings for:
+  - missing artifacts
+  - schema-version mismatch
+  - stale generation timestamps
+  - stale recommendation date
+  - warnings produced by the decision report itself
+- Added artifact metadata to decision outputs:
+  - `schema_version`
+  - `generated_at_utc`
 
-- `app/services/history.py`
-- `app/services/ratio_confidence.py`
+### Explainability Improvements
+- Explanation entries now include:
+  - `hypothesis_name`
+  - `regime`
+  - `active`
+  - stable `reason_code`
+  - weight and contribution
+
+### Regression Coverage
+- Added golden-fixture regression tests for:
+  - `current_recommendation.json`
+  - leaderboard hypothesis ordering
+- Added decision-view guardrail tests for missing/stale/mismatched artifacts.
+
+### Extensibility Hooks
+- Added catalog-driven hypothesis metadata/reason-code loading.
+- Decision layer now supports adding hypotheses without changing core recommendation interfaces.
+
+## How To Run
+
+1. Build core features:
+   - `.venv/bin/python -m src.data.build_core_features`
+2. Run hypothesis engine:
+   - `.venv/bin/python -m src.hypotheses.engine`
+3. Run decision engine:
+   - `.venv/bin/python -m src.decision.engine`
+4. Run app:
+   - `.venv/bin/python -m uvicorn app.main:app --reload`
+5. Run tests:
+   - `.venv/bin/python -m pytest -q`
+
+## Primary Outputs
+
+- `data/processed/core_features.parquet`
+- `data/hypotheses/*.parquet`
+- `data/hypotheses/performance_summary.json`
+- `data/decision/leaderboard.parquet`
+- `data/decision/leaderboard.csv`
+- `data/decision/leaderboard.json`
+- `data/decision/current_signals.parquet`
+- `data/decision/current_signals.csv`
+- `data/decision/current_recommendation.json`
+- `data/decision/decision_report.json`
+
+## Key Files Added/Updated
+
+- `src/decision/catalog.py`
+- `src/decision/engine.py`
+- `src/decision/explain.py`
+- `src/decision/io.py`
+- `src/decision/leaderboard.py`
+- `src/decision/models.py`
+- `app/services/decision_view.py`
 - `app/routes/web.py`
 - `app/templates/calculator.html`
-- `tests/test_history.py`
-- `tests/test_ratio_confidence.py`
-- `tests/test_web_import.py`
+- `app/static/css/styles.css`
 
-## Verification
+## Test Status
 
-Last verified locally:
+Latest local run:
 
-- `python scripts/init_db.py`
-- `python scripts/seed_sample_data.py`
-- `pytest`
-- `python -c 'from app.main import app; print(app.title)'`
+- `.venv/bin/python -m pytest -q`
+- Result: `89 passed`
 
-Latest full test result:
+## Suggested Next Steps
 
-- `49 passed`
-
-## Current Behavior Notes
-
-- By default, the calculator still shows the full historical ratio view.
-- The calculator now supports filtered historical analysis via:
-  - start date
-  - end date
-  - overlap-only mode
-- Confidence is now evaluated for the selected analysis view, not only for the full stored dataset.
-- Invalid date ranges are handled gracefully in the UI.
-- Empty filtered views do not crash the app and show a helpful message.
-
-## Proposed Next Steps
-
-Suggested next milestone:
-
-Add a lightweight export/report layer for the current analysis view so the user can export:
-
-- filtered historical ratio series
-- summary statistics
-- confidence output
-- applied filters
-
-Likely formats:
-
-- CSV export for the filtered ratio series
-- simple HTML or print-friendly report for the current analysis state
-
-## Resume Point
-
-If work resumes later, start from:
-
-1. Review `SESSION_STATUS.md`
-2. Run:
-   - `source .venv/bin/activate`
-   - `python scripts/init_db.py`
-   - `python scripts/seed_sample_data.py`
-   - `pytest`
-3. Open the calculator page and confirm the historical analysis controls still behave as expected
+1. Add a dedicated `/decision` page with filtering and full explainability drill-down.
+2. Add a small automation/script to refresh Step 1 → Step 2 → Step 3 daily.
+3. Add API endpoints that expose current recommendation and leaderboard JSON directly.
+4. Add scenario-level smoke tests that verify UI rendering when artifacts are stale/missing.

@@ -1,0 +1,47 @@
+[
+  {
+    "rank":1,
+    "hypothesis_id":"h1_mean_reversion",
+    "hypothesis_name":"Extreme Ratio Mean Reversion",
+    "quality_score":0.9585161607,
+    "hit_rate":0.5632502308,
+    "total_return":3.4446712788,
+    "avg_pnl":0.0031806752,
+    "max_drawdown":-3.7255079518,
+    "num_trades":1083,
+    "latest_signal":0,
+    "latest_regime":"STRESS",
+    "latest_active":false,
+    "latest_date":"2026-04-02"
+  },
+  {
+    "rank":2,
+    "hypothesis_id":"h3_momentum",
+    "hypothesis_name":"Ratio Momentum",
+    "quality_score":0.7210871072,
+    "hit_rate":0.545045045,
+    "total_return":5.2032271361,
+    "avg_pnl":0.0013787035,
+    "max_drawdown":-30.6255480843,
+    "num_trades":3774,
+    "latest_signal":1,
+    "latest_regime":"STRESS",
+    "latest_active":true,
+    "latest_date":"2026-04-02"
+  },
+  {
+    "rank":3,
+    "hypothesis_id":"h2_gold_lead",
+    "hypothesis_name":"Gold Lead \/ Silver Lag",
+    "quality_score":0.0548953664,
+    "hit_rate":0.5052182163,
+    "total_return":-7.5141771919,
+    "avg_pnl":-0.0035646002,
+    "max_drawdown":-15.8586725012,
+    "num_trades":2108,
+    "latest_signal":0,
+    "latest_regime":"STRESS",
+    "latest_active":false,
+    "latest_date":"2026-04-02"
+  }
+]

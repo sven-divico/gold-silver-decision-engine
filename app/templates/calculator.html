@@ -92,6 +92,139 @@
 </section>
 {% endif %}
 
+<section class="panel decision-panel">
+  <div class="history-head">
+    <div>
+      <p class="eyebrow">Decision Engine</p>
+      <h2>Current recommendation from hypothesis leaderboard</h2>
+    </div>
+    <p class="muted history-note">
+      Generated from Step 2 hypothesis artifacts and Step 3 weighted aggregation.
+    </p>
+  </div>
+
+  {% if decision_warnings %}
+  <div class="panel inline-panel error">
+    <h3>Decision artifact warnings</h3>
+    <ul>
+      {% for warning in decision_warnings %}
+      <li>{{ warning }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if decision_dashboard and decision_dashboard.recommendation %}
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Recommendation</span>
+      <strong>{{ decision_dashboard.recommendation.recommendation }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Decision score</span>
+      <strong>{{ "%.3f"|format(decision_dashboard.recommendation.decision_score) }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Confidence</span>
+      <strong>{{ "%.2f"|format(decision_dashboard.recommendation.confidence) }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Evaluation date</span>
+      <strong>{{ decision_dashboard.recommendation.date }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Active hypotheses</span>
+      <strong>{{ decision_dashboard.recommendation.active_hypotheses }}</strong>
+    </div>
+  </div>
+
+  <p>{{ decision_dashboard.recommendation.summary_text }}</p>
+
+  <div class="decision-grid">
+    <div>
+      <h3>Supporting hypotheses</h3>
+      {% if decision_dashboard.recommendation.supporting_hypotheses %}
+      <ul>
+        {% for item in decision_dashboard.recommendation.supporting_hypotheses %}
+        <li>
+          <strong>{{ item.hypothesis_name }}</strong> ({{ item.hypothesis_id }}) |
+          signal {{ item.signal }} |
+          regime {{ item.regime }} |
+          weight {{ "%.3f"|format(item.weight) }} |
+          contribution {{ "%.3f"|format(item.contribution) }} |
+          reason <code>{{ item.reason_code }}</code>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No supporting hypotheses for the current recommendation.</p>
+      {% endif %}
+    </div>
+    <div>
+      <h3>Opposing hypotheses</h3>
+      {% if decision_dashboard.recommendation.opposing_hypotheses %}
+      <ul>
+        {% for item in decision_dashboard.recommendation.opposing_hypotheses %}
+        <li>
+          <strong>{{ item.hypothesis_name }}</strong> ({{ item.hypothesis_id }}) |
+          signal {{ item.signal }} |
+          regime {{ item.regime }} |
+          weight {{ "%.3f"|format(item.weight) }} |
+          contribution {{ "%.3f"|format(item.contribution) }} |
+          reason <code>{{ item.reason_code }}</code>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No opposing hypotheses for the current recommendation.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <p class="muted">
+    Decision artifacts are not available yet. Run:
+    <code>.venv/bin/python -m src.decision.engine</code>
+  </p>
+  {% endif %}
+
+  {% if decision_dashboard and decision_dashboard.leaderboard %}
+  <div class="history-table-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Hypothesis</th>
+          <th>Quality score</th>
+          <th>Hit rate</th>
+          <th>Total return</th>
+          <th>Avg pnl</th>
+          <th>Max drawdown</th>
+          <th>Latest signal</th>
+          <th>Latest regime</th>
+          <th>Active</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in decision_dashboard.leaderboard %}
+        <tr>
+          <td>{{ row.rank }}</td>
+          <td>{{ row.hypothesis_name }}</td>
+          <td>{{ "%.3f"|format(row.quality_score) }}</td>
+          <td>{{ "%.3f"|format(row.hit_rate) }}</td>
+          <td>{{ "%.3f"|format(row.total_return) }}</td>
+          <td>{{ "%.4f"|format(row.avg_pnl) }}</td>
+          <td>{{ "%.3f"|format(row.max_drawdown) }}</td>
+          <td>{{ row.latest_signal }}</td>
+          <td>{{ row.latest_regime }}</td>
+          <td>{{ "Yes" if row.latest_active else "No" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+
 <section class="panel history-panel">
   <div class="history-head">
     <div>

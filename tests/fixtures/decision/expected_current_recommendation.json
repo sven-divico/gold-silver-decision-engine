@@ -1,0 +1,32 @@
+{
+  "active_hypotheses": 2,
+  "confidence": 0.328413,
+  "date": "2026-04-02",
+  "decision_score": 0.328413,
+  "opposing_hypotheses": [
+    {
+      "active": true,
+      "contribution": -0.3357933579335795,
+      "hypothesis_id": "h2_gold_lead",
+      "hypothesis_name": "Gold Lead / Silver Lag",
+      "reason_code": "silver_overextended_vs_gold",
+      "regime": "NORMAL",
+      "signal": -1,
+      "weight": 0.3357933579335795
+    }
+  ],
+  "recommendation": "BUY",
+  "summary_text": "Buy signal driven by: Mean reversion sees silver as cheap vs gold.",
+  "supporting_hypotheses": [
+    {
+      "active": true,
+      "contribution": 0.6642066420664205,
+      "hypothesis_id": "h1_mean_reversion",
+      "hypothesis_name": "Extreme Ratio Mean Reversion",
+      "reason_code": "silver_cheap_vs_gold",
+      "regime": "NORMAL",
+      "signal": 1,
+      "weight": 0.6642066420664205
+    }
+  ]
+}

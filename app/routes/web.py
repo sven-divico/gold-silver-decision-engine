@@ -1,3 +1,4 @@
+import json
 from datetime import date
 
 from fastapi import APIRouter, File, Form, Query, Request, UploadFile
@@ -7,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from app.db import SessionLocal
 from app.repositories.prices import SQLitePriceRepository
 from app.services.calculator import CalculatorInputs, calculate_decision
+from app.services.decision_view import load_decision_dashboard
 from app.services.data_management import (
     get_dataset_summary,
     reseed_historical_data,
@@ -36,6 +38,8 @@ def _default_context(request: Request) -> dict:
         "history_confidence": None,
         "history_error": None,
         "error": None,
+        "decision_dashboard": None,
+        "decision_warnings": [],
         "history_filters": {
             "start_date": "",
             "end_date": "",
@@ -107,6 +111,16 @@ def _attach_history(context: dict) -> None:
         )
 
 
+def _attach_decision_dashboard(context: dict) -> None:
+    try:
+        dashboard = load_decision_dashboard()
+        context["decision_dashboard"] = dashboard
+        context["decision_warnings"] = dashboard.warnings
+    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+        context["decision_dashboard"] = None
+        context["decision_warnings"] = [f"Failed to load decision artifacts: {exc}"]
+
+
 def _parse_optional_date(value: str | None) -> date | None:
     if not value:
         return None
@@ -157,6 +171,7 @@ def calculator(
         _attach_history(context)
     except ValueError as exc:
         context["history_error"] = str(exc)
+    _attach_decision_dashboard(context)
     return templates.TemplateResponse(request, "calculator.html", context)
 
 
@@ -213,6 +228,7 @@ def calculator_submit(
         _attach_history(context)
     except ValueError as exc:
         context["history_error"] = str(exc)
+    _attach_decision_dashboard(context)
 
     return templates.TemplateResponse(request, "calculator.html", context)
 

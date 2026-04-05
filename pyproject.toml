@@ -11,6 +11,8 @@ requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115,<1.0",
   "jinja2>=3.1,<4.0",
+  "pandas>=2.2,<3.0",
+  "pyarrow>=16,<22",
   "pydantic-settings>=2.2,<3.0",
   "python-multipart>=0.0.9,<1.0",
   "sqlalchemy>=2.0,<3.0",
