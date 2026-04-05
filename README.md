@@ -12,14 +12,19 @@ Lean FastAPI MVP for comparing physical gold and silver scenarios with a server-
 
 ## Quick start
 ```bash
+./scripts/quickstart.sh
+```
+
+Open `http://127.0.0.1:8000`.
+
+Equivalent manual steps:
+```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .[dev]
 python scripts/init_db.py
 uvicorn app.main:app --reload
 ```
-
-Open `http://127.0.0.1:8000`.
 
 ## Local data flows
 Initialize and seed the local SQLite database:
